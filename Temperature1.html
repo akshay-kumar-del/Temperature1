@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Temperature Converter</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    padding: 2rem 3rem;
+  }
+
+  h1 {
+    margin-bottom: 1rem;
+    color: #333;
+  }
+
+  label {
+    display: block;
+    text-align: left;
+    font-weight: 700;
+    margin: 1rem 0 0.3rem;
+    color: #555;
+  }
+
+  input[type="text"] {
+    padding: 0.6rem 1rem;
+    width: 100%;
+    font-size: 1rem;
+    border: 2px solid #74ebd5;
+    border-radius: 8px;
+    outline-offset: 2px;
+    transition: border-color 0.3s ease;
+  }
+  input[type="text"]:focus {
+    border-color: #ACB6E5;
+  }
+
+  .radio-group {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: space-around;
+  }
+  .radio-label {
+    font-weight: 600;
+    cursor: pointer;
+    color: #444;
+    user-select: none;
+  }
+  input[type="radio"] {
+    margin-right: 0.35rem;
+    cursor: pointer;
+  }
+
+  button {
+    margin-top: 1.5rem;
+    padding: 0.75rem 2rem;
+    font-size: 1.1rem;
+    background: #74ebd5;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    color: #333;
+    box-shadow: 0 4px 12px rgba(116, 235, 213, 0.5);
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background: #5ed9ce;
+  }
+
+  .result {
+    margin-top: 2rem;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #222;
+    min-height: 2.2em;
+  }
+  .error {
+    margin-top: 0.7rem;
+    font-size: 0.9rem;
+    color: #d9534f;
+  }
+</style>
+</head>
+<body>
+  <main class="container" role="main" aria-label="Temperature converter">
+    <h1>Temperature Converter</h1>
+    <label for="input-temp">Enter temperature:</label>
+    <input type="text" id="input-temp" aria-describedby="error-message" placeholder="e.g. 32" inputmode="decimal" autocomplete="off" />
+    <fieldset class="radio-group" role="radiogroup" aria-labelledby="unit-label">
+      <legend id="unit-label" class="sr-only">Select input unit</legend>
+      <label class="radio-label" for="celsius">
+        <input type="radio" id="celsius" name="unit" value="C" checked />
+        Celsius
+      </label>
+      <label class="radio-label" for="fahrenheit">
+        <input type="radio" id="fahrenheit" name="unit" value="F" />
+        Fahrenheit
+      </label>
+      <label class="radio-label" for="kelvin">
+        <input type="radio" id="kelvin" name="unit" value="K" />
+        Kelvin
+      </label>
+    </fieldset>
+    <button id="convert-btn" type="button" aria-live="polite" aria-atomic="true">Convert</button>
+    <div id="error-message" class="error" role="alert" aria-live="assertive"></div>
+    <div class="result" id="result" aria-live="polite" aria-atomic="true"></div>
+</main>
+
+<script>
+  (function() {
+    const inputTemp = document.getElementById('input-temp');
+    const convertBtn = document.getElementById('convert-btn');
+    const resultEl = document.getElementById('result');
+    const errorEl = document.getElementById('error-message');
+
+    // Conversion helper functions
+    function celsiusToFahrenheit(c) {
+      return (c * 9/5) + 32;
+    }
+    function celsiusToKelvin(c) {
+      return c + 273.15;
+    }
+    function fahrenheitToCelsius(f) {
+      return (f - 32) * 5/9;
+    }
+    function fahrenheitToKelvin(f) {
+      return (f - 32) * 5/9 + 273.15;
+    }
+    function kelvinToCelsius(k) {
+      return k - 273.15;
+    }
+    function kelvinToFahrenheit(k) {
+      return (k - 273.15) * 9/5 + 32;
+    }
+
+    function roundToTwo(num) {
+      return Math.round(num * 100) / 100;
+    }
+
+    function validateInput(value) {
+      // Accepts float numbers incl. negative and decimal points
+      return /^-?\d+(\.\d+)?$/.test(value.trim());
+    }
+    function getSelectedUnit() {
+        const radios = document.getElementsByName('unit');
+        for (let radio of radios) {
+          if (radio.checked) return radio.value;
+        }
+        return null; // default failsafe
+      }
+
+      convertBtn.addEventListener('click', () => {
+        const tempValue = inputTemp.value;
+        errorEl.textContent = '';
+        resultEl.textContent = '';
+
+        if (!validateInput(tempValue)) {
+          errorEl.textContent = 'Please enter a valid number for temperature.';
+          inputTemp.focus();
+          return;
+        }
+
+        const inputUnit = getSelectedUnit();
+        const tempNum = parseFloat(tempValue);
+        let output = '';
+
+        if (inputUnit === 'C') {
+          const f = roundToTwo(celsiusToFahrenheit(tempNum));
+          const k = roundToTwo(celsiusToKelvin(tempNum));
+          output = ${tempNum} °C = ${f} °F | ${k} K;
+        } else if (inputUnit === 'F') {
+          const c = roundToTwo(fahrenheitToCelsius(tempNum));
+          const k = roundToTwo(fahrenheitToKelvin(tempNum));
+        }
+    }
+}
